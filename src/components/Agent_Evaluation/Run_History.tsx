@@ -64,7 +64,7 @@
 'use client';
 import React from 'react';
 import { StatusBadge } from './Status_Badge';
-import { PencilIcon } from '../../../constants';
+import { PencilIcon, TrashIcon} from '../../../constants';
 import { EvaluationRunCombinationStatus } from '../../../types';
 
 interface RunHistoryProps {
@@ -134,15 +134,26 @@ const RunHistory: React.FC<RunHistoryProps> = ({ evaluation }) => {
                                     <td className="px-6 py-3 text-gray-700">{run.customerName}</td>
                                     <td className="px-6 py-3 text-gray-600">{run.createdDate}</td>
                                     <td className="px-6 py-3 text-gray-600">{run.updatedDate}</td>
-                                    <td className="px-6 py-3">
-                                        <button
-                                            className="flex items-center gap-1 text-indigo-600 hover:text-indigo-800 font-medium"
-                                            title="Edit"
-                                            onClick={() => alert(`Editing ${run.name}`)}
-                                        >
-                                            <PencilIcon className="w-4 h-4" /> Edit
-                                        </button>
-                                    </td>
+                                 <td className="px-6 py-3">
+  <div className="flex items-center gap-3"> {/* ✅ Flex container to align buttons horizontally */}
+    <button
+      className="flex items-center gap-1 text-primary hover:text-primary/90 font-medium"
+      title="Edit"
+      onClick={() => alert(`Editing ${run.name}`)}
+    >
+      <PencilIcon className="w-4 h-4" />
+    </button>
+
+    <button
+      className="flex items-center gap-1 text-red-500 hover:text-red-700 font-medium"
+      title="Delete"
+      onClick={() => alert(`Deleting ${run.name}`)}
+    >
+      <TrashIcon className="w-4 h-4" />
+    </button>
+  </div>
+</td>
+
                                 </tr>
                             ))}
                         </tbody>

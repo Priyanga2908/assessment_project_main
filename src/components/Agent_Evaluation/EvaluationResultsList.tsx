@@ -387,7 +387,7 @@ const AssessmentItem: React.FC<{
         </div>
 
         {/* Name & Description */}
-        <div className="col-span-4 text-brand-primary">
+        <div className="col-span-3 text-brand-primary">
           <p className="font-semibold">{assessment.name}</p>
           <p className="text-sm text-gray-500 mt-1 font-normal">
             {showFullDesc
@@ -398,7 +398,7 @@ const AssessmentItem: React.FC<{
             {assessment.description.length > 80 && (
               <button
                 onClick={() => setShowFullDesc(!showFullDesc)}
-                className="ml-1 text-indigo-600 text-xs hover:underline"
+                className="ml-1 text-primary font-semibold text-xs hover:underline"
               >
                 {showFullDesc ? 'See less' : 'See more'}
               </button>
@@ -410,28 +410,28 @@ const AssessmentItem: React.FC<{
           {assessment.category}
         </div>
 
-        <div className="col-span-1 text-center text-gray-600">
+        <div className="col-span-2 text-center text-gray-600">
           {assessment.createdDate}
         </div>
-        <div className="col-span-1 text-center text-gray-600">
+        <div className="col-span-2 text-center text-gray-600">
           {assessment.updatedDate}
         </div>
 
         <div
-          className="col-span-1 flex justify-end items-center gap-4 relative pr-4"
+          className="col-span-1 flex justify-end items-center gap-1 relative pr-4"
           ref={menuRef}
         >
           <button
             onClick={() => onStart(assessment.id)}
-            className="p-2 rounded-full hover:bg-indigo-50 text-indigo-600"
+            className="p-2 rounded-full hover:text-primary/90 text-primary"
             title="Start Assessment"
           >
-            <PlayIcon className="w-5 h-5" />
+            <PlayIcon className="w-4 h-4" />
           </button>
 
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="p-2 rounded-full hover:bg-gray-100 text-gray-500 hover:text-gray-800"
+            className="p-1 rounded-full hover:bg-gray-100 text-gray-900 hover:text-gray-800"
           >
             <MoreIcon className="w-5 h-5" />
           </button>
@@ -500,9 +500,9 @@ export default function AssessmentList() {
             <select
               value={sort}
               onChange={(e) => setSort(e.target.value)}
-              className="appearance-none bg-white border border-gray-300 text-gray-700 py-2 pl-3 pr-10 rounded-lg leading-tight focus:ring-2 focus:ring-indigo-400 outline-none"
+              className="appearance-none bg-white border border-gray-300 text-gray-700 py-2 pl-3 pr-10 rounded-lg leading-tight focus:ring-2 focus:ring-primary outline-none"
             >
-              <option value="newest">Sort by: Newest</option>
+              <option  value="newest">Sort by: Newest</option>
               <option value="oldest">Sort by: Oldest</option>
               <option value="name">Sort by: Name</option>
             </select>
@@ -522,10 +522,10 @@ export default function AssessmentList() {
 
       <div className="hidden md:grid grid-cols-12 gap-6 py-4 px-4 bg-gray-50 text-xs font-bold text-gray-900 uppercase tracking-wider border-b border-gray-200">
         <div className="col-span-1"></div>
-        <div className="col-span-4">Lens Name</div>
+        <div className="col-span-3">Lens Name</div>
         <div className="col-span-2 text-center px-4">Category</div>
-        <div className="col-span-1 text-center">Created Date</div>
-        <div className="col-span-1 text-center">Updated Date</div>
+        <div className="col-span-2 text-center">Created Date</div>
+        <div className="col-span-2 text-center">Updated Date</div>
         <div className="col-span-1 text-right pr-4">Actions</div>
       </div>
 
