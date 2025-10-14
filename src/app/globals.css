@@ -1,0 +1,151 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+body {
+  font-family: 'Inter', sans-serif;
+}
+
+@layer base {
+  :root {
+    --background: 0 0% 96%; /* #F5F5F5 Light neutral grey */
+    --foreground: 0 0% 7%; /* #121212 Near-black */
+
+    --card: 0 0% 100%; /* #FFFFFF White */
+    --card-foreground: 0 0% 7%; /* #121212 Near-black */
+
+    --popover: 0 0% 100%; /* #FFFFFF White */
+    --popover-foreground: 0 0% 7%; /* #121212 Near-black */
+
+    --primary: 230 41% 20%; /* #1E2348 Muted dark blue */
+    --primary-foreground: 0 0% 100%; /* #FFFFFF White */
+
+    --secondary: 0 0% 93%;
+    --secondary-foreground: 0 0% 20%;
+
+    --muted: 0 0% 90%;
+    --muted-foreground: 0 0% 40%;
+
+    --accent: 230 41% 20%; /* #1E2348 Muted dark blue */
+    --accent-foreground: 0 0% 100%; /* #FFFFFF White */
+
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 87%;
+    --input: 0 0% 90%;
+    --ring: 33 100% 50%; /* #FF9300 Vibrant orange */
+
+    --chart-1: 33 100% 50%; /* Vibrant Orange */
+    --chart-2: 230 41% 40%; /* Lighter Muted Blue */
+    --chart-3: 230 41% 60%; /* Even Lighter Muted Blue */
+    --chart-4: 210 30% 50%; /* Slate Blue */
+    --chart-5: 0 0% 50%;   /* Grey */
+    --radius: 0.5rem;
+
+    /* Sidebar specific colors for light theme */
+    --sidebar-background: 230 60% 98%; /* Very light version of primary, almost white */
+    --sidebar-foreground: 232 82% 11%; /* Primary text color */
+    --sidebar-primary: 35 100% 50%; /* Accent for active items */
+    --sidebar-primary-foreground: 0 0% 100%; /* White text on accent */
+    --sidebar-accent: 230 50% 92%; /* Hover background */
+    --sidebar-accent-foreground: 232 82% 11%; /* Primary text on hover */
+    --sidebar-border: 230 30% 88%;
+    --sidebar-ring: 35 100% 50%;
+  }
+
+  .dark {
+    --background: 0 0% 7%; /* #121212 Near-black */
+    --foreground: 0 0% 96%; /* #F5F5F5 Light neutral grey */
+
+    --card: 0 0% 10%;
+    --card-foreground: 0 0% 96%;
+
+    --popover: 0 0% 10%;
+    --popover-foreground: 0 0% 96%;
+
+    --primary: 230 41% 40%; /* Lighter muted blue for dark mode */
+    --primary-foreground: 0 0% 100%;
+
+    --secondary: 0 0% 15%;
+    --secondary-foreground: 0 0% 90%;
+
+    --muted: 0 0% 12%;
+    --muted-foreground: 0 0% 60%;
+
+    --accent: 230 41% 40%; /* Lighter muted blue for dark mode */
+    --accent-foreground: 0 0% 100%;
+
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+
+    --border: 0 0% 20%;
+    --input: 0 0% 15%;
+    --ring: 33 100% 50%; /* #FF9300 Vibrant orange */
+    
+    --chart-1: 33 100% 50%; /* Vibrant Orange */
+    --chart-2: 230 41% 40%; /* Lighter Muted Blue */
+    --chart-3: 230 41% 60%; /* Even Lighter Muted Blue */
+    --chart-4: 210 30% 50%; /* Slate Blue */
+    --chart-5: 0 0% 50%;   /* Grey */
+
+    /* Sidebar specific colors for dark theme */
+    --sidebar-background: 232 75% 13%; /* Slightly different from main dark background */
+    --sidebar-foreground: 0 0% 95%; /* Light text */
+    --sidebar-primary: 35 100% 50%; /* Accent for active items */
+    --sidebar-primary-foreground: 232 82% 11%; /* Primary text on accent */
+    --sidebar-accent: 232 60% 18%; /* Hover background */
+    --sidebar-accent-foreground: 0 0% 98%; /* Light text on hover */
+    --sidebar-border: 232 60% 22%;
+    --sidebar-ring: 35 100% 50%;
+  }
+}
+
+@layer base {
+  /* keep default box model and avoid applying a non-existent utility globally */
+  *, *::before, *::after { box-sizing: border-box; }
+  body {
+    background-color: hsl(var(--background));
+    color: hsl(var(--foreground));
+  }
+}
+
+@layer utilities {
+  .bg-sidebar {
+    background-color: hsl(var(--sidebar-background));
+  }
+  .text-sidebar-foreground {
+    color: hsl(var(--sidebar-foreground));
+  }
+  .bg-sidebar-primary {
+    background-color: hsl(var(--sidebar-primary));
+  }
+  .text-sidebar-primary-foreground {
+    color: hsl(var(--sidebar-primary-foreground));
+  }
+  .bg-sidebar-accent {
+    background-color: hsl(var(--sidebar-accent));
+  }
+  .text-sidebar-accent-foreground {
+    color: hsl(var(--sidebar-accent-foreground));
+  }
+  .border-sidebar-border {
+    border-color: hsl(var(--sidebar-border));
+  }
+  
+  /* Custom text sizes to match chatbot styling */
+  .text-chatbot-base {
+    font-size: 15.75px;
+    line-height: 1.5;
+  }
+  
+  .text-chatbot-small {
+    font-size: 12.25px;
+    line-height: 1.4;
+  }
+  
+  .sidebar-icon {
+    width: 21px;
+    height: 21px;
+  }
+}
