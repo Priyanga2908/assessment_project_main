@@ -308,6 +308,7 @@
 
 'use client';
 import React, { useState, useRef, useEffect } from 'react';
+import { DownloadIcon } from 'lucide-react';
 import {
   SearchIcon,
   PlusIcon,
@@ -346,6 +347,30 @@ const mockAssessments = [
     updatedDate: '2025-09-29',
   },
 ];
+
+const handleDownloadCSV = () => {
+  const headers = ['ID', 'Name', 'Description', 'Category', 'Created Date', 'Updated Date'];
+
+  const rows = mockAssessments.map(a => [
+    a.id,
+    `"${a.name}"`,
+    `"${a.description.replace(/"/g, '""')}"`, // Escape quotes
+    a.category,
+    a.createdDate,
+    a.updatedDate,
+  ]);
+
+  const csvContent =
+    headers.join(',') + '\n' + rows.map(r => r.join(',')).join('\n');
+
+  const blob = new Blob([csvContent], { type: 'text/csv' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = 'lenses.csv';
+  a.click();
+  URL.revokeObjectURL(url);
+};
 
 const ITEMS_PER_PAGE = 10;
 
@@ -510,14 +535,25 @@ export default function AssessmentList() {
               <ChevronDownIcon className="w-5 h-5" />
             </div>
           </div>
+          
         </div>
 
-        <button
-          onClick={handleCreate}
-          className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition"
-        >
-          <PlusIcon className="w-5 h-5" /> Create Lens
-        </button>
+        <div className="flex gap-2">
+  <button
+    onClick={handleDownloadCSV}
+    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition"
+  >
+    <DownloadIcon className="w-5 h-5" /> Export
+  </button>
+
+  <button
+    onClick={handleCreate}
+    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition"
+  >
+    <PlusIcon className="w-5 h-5" /> Create Lens
+  </button>
+</div>
+
       </div>
 
       <div className="hidden md:grid grid-cols-12 gap-6 py-4 px-4 bg-gray-50 text-xs font-bold text-gray-900 uppercase tracking-wider border-b border-gray-200">
