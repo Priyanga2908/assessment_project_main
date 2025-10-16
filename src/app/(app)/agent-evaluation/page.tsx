@@ -25,7 +25,7 @@ export default function AgentEvaluationListPage() {
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-primary/10 via-accent/10 to-background dark:from-primary/20 dark:via-accent/15 dark:to-background/90">
       <AiStudioSectionHeader
         title="Lens Creation"
-        subtitle="Manage , edit ,create Lens "
+        subtitle="Manage, Edit, Create Lens "
         onNavigateHome={() => router.push('/ai-studio')}
       />
       <div className="flex flex-1 overflow-hidden">
