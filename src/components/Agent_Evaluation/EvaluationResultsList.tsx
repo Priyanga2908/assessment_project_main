@@ -305,9 +305,12 @@
 
 // export default EvaluationResultsList;
 
+//crt code till the edit and delete with alert pop up code...
 
+
+// evaluationresultlist.tsx
 'use client';
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { DownloadIcon } from 'lucide-react';
 import {
   SearchIcon,
@@ -317,82 +320,89 @@ import {
 } from '../../../constants';
 import PlayIcon from '@/components/icons/PlayIcon';
 import RunHistory from './Run_History';
+import Papa from 'papaparse';
+import { toast } from 'react-hot-toast';
 
-const mockAssessments = [
-  {
-    id: 1,
-    name: 'Primary Model Comparison',
-    description:
-      'Comparing the main models across all key performance indicators including precision, recall, and overall performance across various datasets.',
-    category: 'Model Analysis',
-    createdDate: '2025-10-01',
-    updatedDate: '2025-10-13',
-  },
-  {
-    id: 2,
-    name: 'Customer Sentiment Evaluation',
-    description:
-      'Analyzing sentiment accuracy of customer interaction data and comparing multiple fine-tuned language models for consistency.',
-    category: 'Customer Analytics',
-    createdDate: '2025-09-28',
-    updatedDate: '2025-10-12',
-  },
-  {
-    id: 3,
-    name: 'Data Bias Audit',
-    description:
-      'Identifying and quantifying potential data bias in demographic segments using fairness indicators and model bias scores.',
-    category: 'Data Quality',
-    createdDate: '2025-09-25',
-    updatedDate: '2025-09-29',
-  },
-];
-
-const handleDownloadCSV = () => {
-  const headers = ['ID', 'Name', 'Description', 'Category', 'Created Date', 'Updated Date'];
-
-  const rows = mockAssessments.map(a => [
-    a.id,
-    `"${a.name}"`,
-    `"${a.description.replace(/"/g, '""')}"`, // Escape quotes
-    a.category,
-    a.createdDate,
-    a.updatedDate,
-  ]);
-
-  const csvContent =
-    headers.join(',') + '\n' + rows.map(r => r.join(',')).join('\n');
-
-  const blob = new Blob([csvContent], { type: 'text/csv' });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement('a');
-  a.href = url;
-  a.download = 'lenses.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-};
-
+// ITEMS PER PAGE
 const ITEMS_PER_PAGE = 10;
 
-const AssessmentItem: React.FC<{
-  assessment: any;
+interface Assessment {
+  id: number | string;
+  name: string;
+  description: string;
+  category: string;
+  createdDate: string;
+  updatedDate: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+// Props for item
+interface AssessmentItemProps {
+  assessment: Assessment;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  onStart: (id: number) => void;
-}> = ({ assessment, isExpanded, onToggleExpand, onStart }) => {
+  onStart: (id: number | string) => void;
+  onUpdateSuccess: () => void; // callback to refresh or re-fetch list
+}
+
+const categoryColors: Record<string, string> = {
+  'Gen AI': 'bg-purple-100 text-purple-800 border-purple-200',
+  'Network Security': 'bg-blue-100 text-blue-800 border-blue-200',
+  'Cloud (AWS)': 'bg-yellow-100 text-yellow-800 border-yellow-200',
+  'IOT': 'bg-red-100 text-red-800 border-red-200',
+  'DevOps': 'bg-green-100 text-green-800 border-green-200',
+  'Uncategorized': 'bg-gray-100 text-gray-700 border-gray-200',
+};
+
+const TOKEN =
+  'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhlZTMyOGUyODI2NWM2OGJmNDVmMTllIiwiZW1haWwiOiJybmFnZXNoNjYwQGdtYWlsLmNvbSIsImV4cCI6MTc2MDYyNzYyMiwibmJmIjoxNzYwNjA5NjIyLCJpYXQiOjE3NjA2MDk2MjJ9.Hn1f6KcYsFfZnD_gI6VNchQy1301XdC1QWC5NwyIQc8';
+
+const AssessmentItem: React.FC<AssessmentItemProps> = ({
+  assessment,
+  isExpanded,
+  onToggleExpand,
+  onStart,
+  onUpdateSuccess,
+}) => {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [showFullDesc, setShowFullDesc] = useState(false);
+  const [isEditOpen, setIsEditOpen] = useState(false);
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false);
+
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+      if (
+        menuRef.current &&
+        !menuRef.current.contains(event.target as Node)
+      ) {
         setIsMenuOpen(false);
       }
     };
     document.addEventListener('mousedown', handleClickOutside);
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
+
+  const categoryStyle =
+    categoryColors[assessment.category] || categoryColors['Uncategorized'];
+
+  const openEdit = () => {
+    setIsMenuOpen(false);
+    setIsEditOpen(true);
+  };
+  const closeEdit = () => {
+    setIsEditOpen(false);
+  };
+
+  const openDelete = () => {
+    setIsMenuOpen(false);
+    setIsDeleteOpen(true);
+  };
+  const closeDelete = () => {
+    setIsDeleteOpen(false);
+  };
 
   return (
     <div className="border-b border-gray-200 last:border-b-0">
@@ -402,6 +412,7 @@ const AssessmentItem: React.FC<{
             onClick={onToggleExpand}
             className="p-1 rounded-full hover:bg-gray-200"
             aria-expanded={isExpanded}
+            aria-label={isExpanded ? 'Collapse' : 'Expand'}
           >
             <ChevronDownIcon
               className={`w-5 h-5 text-gray-500 transition-transform ${
@@ -411,16 +422,15 @@ const AssessmentItem: React.FC<{
           </button>
         </div>
 
-        {/* Name & Description */}
         <div className="col-span-3 text-brand-primary">
-          <p className="font-semibold">{assessment.name}</p>
+          <p className="font-semibold text-gray-900">{assessment.name}</p>
           <p className="text-sm text-gray-500 mt-1 font-normal">
             {showFullDesc
               ? assessment.description
-              : `${assessment.description.slice(0, 80)}${
-                  assessment.description.length > 80 ? '...' : ''
+              : `${assessment.description?.slice(0, 80)}${
+                  assessment.description?.length > 80 ? '...' : ''
                 }`}
-            {assessment.description.length > 80 && (
+            {assessment.description?.length > 80 && (
               <button
                 onClick={() => setShowFullDesc(!showFullDesc)}
                 className="ml-1 text-primary font-semibold text-xs hover:underline"
@@ -431,8 +441,12 @@ const AssessmentItem: React.FC<{
           </p>
         </div>
 
-        <div className="col-span-2 text-center text-gray-700 px-4">
-          {assessment.category}
+        <div className="col-span-2 flex justify-center">
+          <span
+            className={`px-3 py-1 text-xs font-medium rounded-full border ${categoryStyle}`}
+          >
+            {assessment.category || 'Uncategorized'}
+          </span>
         </div>
 
         <div className="col-span-2 text-center text-gray-600">
@@ -450,6 +464,7 @@ const AssessmentItem: React.FC<{
             onClick={() => onStart(assessment.id)}
             className="p-2 rounded-full hover:text-primary/90 text-primary"
             title="Start Assessment"
+            aria-label="Start Assessment"
           >
             <PlayIcon className="w-4 h-4" />
           </button>
@@ -457,17 +472,25 @@ const AssessmentItem: React.FC<{
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="p-1 rounded-full hover:bg-gray-100 text-gray-900 hover:text-gray-800"
+            aria-haspopup="true"
+            aria-expanded={isMenuOpen}
           >
             <MoreIcon className="w-5 h-5" />
           </button>
 
           {isMenuOpen && (
-            <div className="absolute right-0 mt-2 w-40 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-20">
-              <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
-                Edit 
+            <div className="absolute right-0 mt-2 w-44 bg-white rounded-md shadow-lg ring-1 ring-black ring-opacity-5 z-20">
+              <button
+                onClick={openEdit}
+                className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+              >
+                Edit
               </button>
-              <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100">
-                Delete 
+              <button
+                onClick={openDelete}
+                className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+              >
+                Delete
               </button>
             </div>
           )}
@@ -479,32 +502,567 @@ const AssessmentItem: React.FC<{
           <RunHistory />
         </div>
       )}
+
+      {isEditOpen && (
+        <EditModal
+          assessment={assessment}
+          onClose={closeEdit}
+          onUpdateSuccess={() => {
+            closeEdit();
+            onUpdateSuccess();
+          }}
+        />
+      )}
+
+      {isDeleteOpen && (
+        <DeleteModal
+          assessment={assessment}
+          onClose={closeDelete}
+          onDeleteSuccess={() => {
+            closeDelete();
+            onUpdateSuccess();
+          }}
+        />
+      )}
     </div>
   );
 };
 
-export default function AssessmentList() {
+interface EditModalProps {
+  assessment: Assessment;
+  onClose: () => void;
+  onUpdateSuccess: () => void;
+}
+
+const EditModal: React.FC<EditModalProps> = ({
+  assessment,
+  onClose,
+  onUpdateSuccess,
+}) => {
+  const [name, setName] = useState(assessment.name);
+  const [description, setDescription] = useState(assessment.description);
+  const [csvFile, setCsvFile] = useState<File | null>(null);
+
+  const [validationMessage, setValidationMessage] = useState('');
+  const [isValidated, setIsValidated] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const fileInputRef = useRef<HTMLInputElement | null>(null);
+
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setValidationMessage('');
+    setIsValidated(false);
+    if (e.target.files && e.target.files[0]) {
+      setCsvFile(e.target.files[0]);
+    } else {
+      setCsvFile(null);
+    }
+  };
+
+  const handleValidate = () => {
+    if (!csvFile) {
+      setValidationMessage('No CSV file selected for validation.');
+      return;
+    }
+    if (!csvFile.name.toLowerCase().endsWith('.csv')) {
+      setValidationMessage(
+        'Error: File invalid, please upload a CSV file only.'
+      );
+      return;
+    }
+
+    setIsProcessing(true);
+    setValidationMessage('Validating...');
+
+    Papa.parse<string[]>(csvFile, {
+      header: false,
+      complete: (results) => {
+        if (results.errors.length > 0) {
+          setValidationMessage(`Error parsing CSV: ${results.errors[0].message}`);
+          setIsValidated(false);
+          setIsProcessing(false);
+          return;
+        }
+
+        const requiredHeaders = [
+          'Category',
+          'Control Objective',
+          'What to Check',
+          'Rating Explanation',
+          'Recommendations',
+        ];
+
+        if (results.data.length < 2) {
+          setValidationMessage(
+            'Error: CSV must contain a header row and at least one data row.'
+          );
+          setIsValidated(false);
+          setIsProcessing(false);
+          return;
+        }
+
+        const headers = (results.data[0] as string[]).map((h) => h.trim());
+        const firstDataRow = results.data[1] as string[];
+
+        const hasAllHeaders =
+          requiredHeaders.every((h, idx) => headers[idx] === h) &&
+          headers.length === requiredHeaders.length;
+
+        if (!hasAllHeaders) {
+          setValidationMessage(
+            'Error: CSV headers do not match the required format.'
+          );
+          setIsValidated(false);
+          setIsProcessing(false);
+          return;
+        }
+
+        const isFirstRowValid =
+          firstDataRow.length === requiredHeaders.length &&
+          firstDataRow.every((cell) => cell && cell.trim() !== '');
+
+        if (!isFirstRowValid) {
+          setValidationMessage(
+            'Error: The first data row below the headers cannot be empty.'
+          );
+          setIsValidated(false);
+          setIsProcessing(false);
+          return;
+        }
+
+        setValidationMessage('CSV is valid. You can update now.');
+        setIsValidated(true);
+        setIsProcessing(false);
+      },
+      error: (err) => {
+        setValidationMessage(`Error parsing CSV: ${err?.message || 'Unknown'}`);
+        setIsValidated(false);
+        setIsProcessing(false);
+      },
+    });
+  };
+
+  const handleSubmit = async () => {
+    // basic validations
+    if (!name.trim() || !description.trim()) {
+      toast.error('Please fill in all fields.');
+      return;
+    }
+
+    // if user has selected a new CSV, ensure it's validated
+    if (csvFile && !isValidated) {
+      toast.error('Please validate the CSV file before submitting.');
+      return;
+    }
+
+    setIsSubmitting(true);
+    try {
+      const formData = new FormData();
+      formData.append('lens_name', name);
+      formData.append('lens_description', description);
+
+      if (csvFile) {
+        formData.append('csv_file', csvFile);
+      }
+
+      const resp = await fetch(
+        `http://localhost:8080/api/lenses/${assessment.id}`,
+        {
+          method: 'PUT',
+          headers: {
+            Authorization: `Bearer ${TOKEN}`,
+          },
+          body: formData,
+        }
+      );
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => null);
+        throw new Error(`Error: ${resp.status} ${text ?? ''}`);
+      }
+      const respJson = await resp.json().catch(() => null);
+      console.log('Update success:', respJson);
+      toast.success('Lens updated successfully!');
+      onUpdateSuccess();
+    } catch (err) {
+      console.error('Update failed:', err);
+      toast.error('Failed to update lens.');
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    const ok = window.confirm(
+      'Are you sure you want to permanently delete this lens? This action cannot be undone.'
+    );
+    if (!ok) return;
+
+    setIsDeleting(true);
+    try {
+      const resp = await fetch(
+        `http://localhost:8080/api/lenses/${assessment.id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${TOKEN}`,
+          },
+        }
+      );
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => null);
+        throw new Error(`Error: ${resp.status} ${text ?? ''}`);
+      }
+      toast.success('Lens deleted successfully.');
+      onUpdateSuccess();
+    } catch (err) {
+      console.error('Delete failed:', err);
+      toast.error('Failed to delete lens.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl p-6 relative">
+        <div className="flex items-start justify-between gap-4 mb-4">
+          <div>
+            <h2 className="text-2xl font-semibold text-gray-900">Edit Lens</h2>
+            <p className="text-sm text-gray-500 mt-1">
+              Update lens details or upload a new CSV. 
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={onClose}
+              aria-label="Close modal"
+              className="text-gray-500 hover:text-gray-700 rounded-full p-2"
+            >
+              ✕
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div>
+              <label className="block text-sm font-medium mb-2">Name</label>
+              <input
+                type="text"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-primary outline-none"
+                placeholder="Lens name"
+              />
+            </div>
+
+            <div>
+              <label className="block text-sm font-medium mb-2">Category</label>
+              <input
+                type="text"
+                value={assessment.category}
+                readOnly
+                className="w-full border rounded px-3 py-2 bg-gray-50 text-gray-600"
+                title="Category is read-only in this modal"
+              />
+            </div>
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium mb-2">Description</label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              rows={4}
+              className="w-full border rounded px-3 py-2 focus:ring-2 focus:ring-primary outline-none"
+              placeholder="Short description of the lens"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 items-center">
+            <div>
+              <label className="block text-sm font-medium mb-2">Upload New CSV</label>
+
+              <div className="flex items-center gap-3">
+                <label className="cursor-pointer px-4 py-2 bg-gray-100 rounded border hover:bg-gray-200 inline-flex items-center gap-2">
+                  Choose file
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept=".csv"
+                    onChange={handleFileChange}
+                    className="hidden"
+                  />
+                </label>
+
+                <div className="text-sm text-gray-700">
+                  {csvFile ? csvFile.name : 'No file selected'}
+                </div>
+              </div>
+
+
+            </div>
+
+            <div className="text-sm text-gray-500">
+              <p>
+                Required CSV headers:
+              </p>
+              <ul className="list-disc ml-5 mt-2">
+                <li>Category</li>
+                <li>Control Objective</li>
+                <li>What to Check</li>
+                <li>Rating Explanation</li>
+                <li>Recommendations</li>
+              </ul>
+            </div>
+          </div>
+
+          <div className="flex items-center justify-between gap-4 pt-4 border-t">
+
+  {/* ✅ Validation message on left */}
+  <div className="text-sm mt-2">
+    {validationMessage && (
+      <span className={isValidated ? 'text-green-600' : 'text-red-600'}>
+        {validationMessage}
+      </span>
+    )}
+  </div>
+
+  {/* ✅ Both buttons on right side */}
+  <div className="flex items-center gap-3">
+    <button
+      onClick={handleValidate}
+      disabled={!csvFile || isProcessing}
+      className="px-4 py-2 border rounded disabled:opacity-50"
+    >
+      {isProcessing ? 'Validating...' : 'Validate'}
+    </button>
+
+    <button
+      onClick={handleSubmit}
+      disabled={isSubmitting}
+      className="px-4 py-2 bg-primary text-white rounded-md shadow hover:bg-primary/90 disabled:opacity-60"
+    >
+      {isSubmitting ? 'Updating...' : 'Update Lens'}
+    </button>
+  </div>
+
+</div>
+
+
+          
+        </div>
+      </div>
+    </div>
+  );
+};
+
+/* -------------------
+   DeleteModal Component
+   ------------------- */
+interface DeleteModalProps {
+  assessment: Assessment;
+  onClose: () => void;
+  onDeleteSuccess: () => void;
+}
+
+const DeleteModal: React.FC<DeleteModalProps> = ({
+  assessment,
+  onClose,
+  onDeleteSuccess,
+}) => {
+  const [isDeleting, setIsDeleting] = useState(false);
+
+  const handleConfirmDelete = async () => {
+    setIsDeleting(true);
+    try {
+      const resp = await fetch(
+        `http://localhost:8080/api/lenses/${assessment.id}`,
+        {
+          method: 'DELETE',
+          headers: {
+            Authorization: `Bearer ${TOKEN}`,
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      if (!resp.ok) {
+        const text = await resp.text().catch(() => null);
+        throw new Error(`Delete failed: ${resp.status} ${text ?? ''}`);
+      }
+      toast.success('Lens deleted successfully.');
+      onDeleteSuccess();
+    } catch (err) {
+      console.error('Delete error:', err);
+      toast.error('Failed to delete lens.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 px-4">
+  <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg p-6 relative">
+    <div className="flex items-start justify-between gap-4 mb-6"> 
+      {/* increased bottom margin from mb-4 → mb-6 for more breathing space */}
+      <div>
+        <h2 className="text-2xl font-semibold text-gray-900 mb-2">Delete Lens</h2>
+        {/* added mb-2 for spacing and removed tightness */}
+        <p className="text-sm text-gray-500">
+          This will permanently delete the lens and all its associated data. Proceed?
+        </p>
+      </div>
+      <div className="flex items-center gap-2">
+        <button
+          onClick={onClose}
+          aria-label="Close modal"
+          className="text-gray-500 hover:text-gray-700 rounded-full p-2"
+        >
+          ✕
+        </button>
+      </div>
+    </div>
+
+    <div className="pt-3">
+      <div className="flex items-center justify-end gap-3 pt-4">
+        
+        <button
+          onClick={onClose}
+          disabled={isDeleting}
+          className="px-4 py-2 border rounded bg-white hover:bg-gray-50"
+        >
+          Cancel
+        </button>
+
+        <button
+          onClick={handleConfirmDelete}
+          disabled={isDeleting}
+          className="px-4 py-2 bg-primary text-white rounded-md shadow hover:bg-primary/90 disabled:opacity-60"
+        >
+          {isDeleting ? 'Deleting...' : 'Delete'}
+        </button>
+      </div>
+    </div>
+  </div>
+</div>
+
+  );
+};
+
+const AssessmentList: React.FC = () => {
+  const [assessments, setAssessments] = useState<Assessment[]>([]);
   const [search, setSearch] = useState('');
   const [sort, setSort] = useState('newest');
-  const [expandedId, setExpandedId] = useState<number | null>(null);
+  const [expandedId, setExpandedId] = useState<number | string | null>(null);
   const [page, setPage] = useState(1);
 
-  const filtered = mockAssessments.filter(
+  const fetchAssessments = async () => {
+    try {
+      const res = await fetch('http://localhost:8080/api/lenses', {
+        headers: {
+          Authorization: `Bearer ${TOKEN}`,
+        },
+      });
+      if (!res.ok) {
+        throw new Error(`Fetch failed: ${res.status}`);
+      }
+      const data = await res.json();
+      const list = Array.isArray(data.body) ? data.body : [];
+
+      const formatted: Assessment[] = list.map((item: any) => ({
+        id: item.id,
+        name: item.name || 'Untitled',
+        description: item.description || 'No description available',
+        category: item.category || 'Uncategorized',
+        createdDate: item.created_at
+          ? new Date(item.created_at).toLocaleDateString()
+          : '-',
+        updatedDate: item.updated_at
+          ? new Date(item.updated_at).toLocaleDateString()
+          : '-',
+        created_at: item.created_at,
+        updated_at: item.updated_at,
+      }));
+      setAssessments(formatted);
+    } catch (err) {
+      console.error('Fetch error:', err);
+      toast.error('Failed to fetch lenses.');
+    }
+  };
+
+  useEffect(() => {
+    fetchAssessments();
+  }, []);
+
+  // filter & sort
+  const filtered = assessments.filter(
     (a) =>
       a.name.toLowerCase().includes(search.toLowerCase()) ||
       a.category.toLowerCase().includes(search.toLowerCase())
   );
+  const sorted = [...filtered].sort((a, b) => {
+    if (sort === 'newest')
+      return (
+        new Date(b.created_at || '').getTime() -
+        new Date(a.created_at || '').getTime()
+      );
+    if (sort === 'oldest')
+      return (
+        new Date(a.created_at || '').getTime() -
+        new Date(b.created_at || '').getTime()
+      );
+    if (sort === 'name') return a.name.localeCompare(b.name);
+    return 0;
+  });
 
-  const totalPages = Math.ceil(filtered.length / ITEMS_PER_PAGE);
-  const paginated = filtered.slice((page - 1) * ITEMS_PER_PAGE, page * ITEMS_PER_PAGE);
+  const totalPages = Math.max(1, Math.ceil(sorted.length / ITEMS_PER_PAGE));
+  const paginated = sorted.slice(
+    (page - 1) * ITEMS_PER_PAGE,
+    page * ITEMS_PER_PAGE
+  );
 
-  const handleStart = (id: number) => {
+  const handleStart = (id: number | string) => {
     window.location.href = '/agent-evaluation/start-assessment';
   };
 
   const handleCreate = () => {
     window.location.href = '/agent-evaluation/create-lens';
   };
+
+  const handleDownloadCSV = () => {
+    const headers = [
+      'ID',
+      'Name',
+      'Description',
+      'Category',
+      'Created Date',
+      'Updated Date',
+    ];
+    const rows = assessments.map((a) => [
+      a.id,
+      `"${a.name}"`,
+      `"${a.description?.replace(/"/g, '""')}"`,
+      a.category,
+      a.createdDate,
+      a.updatedDate,
+    ]);
+    const csvContent =
+      headers.join(',') + '\n' + rows.map((r) => r.join(',')).join('\n');
+    const blob = new Blob([csvContent], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'assessments.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+  };
+
+  useEffect(() => {
+    // Reset page when filtered list changes to keep UI consistent
+    setPage(1);
+  }, [search, sort, assessments.length]);
 
   return (
     <div className="bg-white rounded-xl shadow-sm border border-gray-200">
@@ -514,10 +1072,10 @@ export default function AssessmentList() {
             <SearchIcon className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="text"
-              placeholder="Search Lens..."
+              placeholder="Search by Lens, Category..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-indigo-400 outline-none"
+              className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary outline-none"
             />
           </div>
 
@@ -527,7 +1085,7 @@ export default function AssessmentList() {
               onChange={(e) => setSort(e.target.value)}
               className="appearance-none bg-white border border-gray-300 text-gray-700 py-2 pl-3 pr-10 rounded-lg leading-tight focus:ring-2 focus:ring-primary outline-none"
             >
-              <option  value="newest">Sort by: Newest</option>
+              <option value="newest">Sort by: Newest</option>
               <option value="oldest">Sort by: Oldest</option>
               <option value="name">Sort by: Name</option>
             </select>
@@ -535,25 +1093,23 @@ export default function AssessmentList() {
               <ChevronDownIcon className="w-5 h-5" />
             </div>
           </div>
-          
         </div>
 
         <div className="flex gap-2">
-  <button
-    onClick={handleDownloadCSV}
-    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition"
-  >
-    <DownloadIcon className="w-5 h-5" /> Export
-  </button>
+          <button
+            onClick={handleDownloadCSV}
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition"
+          >
+            <DownloadIcon className="w-5 h-5" /> Download
+          </button>
 
-  <button
-    onClick={handleCreate}
-    className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition"
-  >
-    <PlusIcon className="w-5 h-5" /> Create Lens
-  </button>
-</div>
-
+          <button
+            onClick={handleCreate}
+            className="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white font-semibold py-2 px-4 rounded-lg shadow-md transition"
+          >
+            <PlusIcon className="w-5 h-5" /> Create Lens
+          </button>
+        </div>
       </div>
 
       <div className="hidden md:grid grid-cols-12 gap-6 py-4 px-4 bg-gray-50 text-xs font-bold text-gray-900 uppercase tracking-wider border-b border-gray-200">
@@ -574,45 +1130,47 @@ export default function AssessmentList() {
             setExpandedId(expandedId === a.id ? null : a.id)
           }
           onStart={handleStart}
+          onUpdateSuccess={fetchAssessments}
         />
       ))}
 
-      {/* Pagination Controls */}
-      {/* Pagination Controls - Matches Screenshot Style */}
-<div className="flex justify-between items-center p-4 border-t text-sm text-gray-600">
-  <span>
-    Showing {(page - 1) * ITEMS_PER_PAGE + 1} to{' '}
-    {Math.min(page * ITEMS_PER_PAGE, filtered.length)} of {filtered.length} results
-  </span>
+      <div className="flex justify-between items-center p-4 border-t text-sm text-gray-600">
+        <span>
+          Showing {sorted.length === 0 ? 0 : (page - 1) * ITEMS_PER_PAGE + 1} to{' '}
+          {sorted.length === 0
+            ? 0
+            : Math.min(page * ITEMS_PER_PAGE, sorted.length)}{' '}
+          of {sorted.length} results
+        </span>
 
-  <div className="flex items-center gap-2">
-    <button
-      disabled={page === 1}
-      onClick={() => setPage((p) => p - 1)}
-      className={`px-4 py-2 rounded-md border ${
-        page === 1
-          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-          : 'bg-white hover:bg-gray-50 text-gray-700'
-      }`}
-    >
-      Previous
-    </button>
+        <div className="flex items-center gap-2">
+          <button
+            disabled={page === 1}
+            onClick={() => setPage((p) => Math.max(1, p - 1))}
+            className={`px-4 py-2 rounded-md border ${
+              page === 1
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white hover:bg-gray-50 text-gray-700'
+            }`}
+          >
+            Previous
+          </button>
 
-    <button
-      disabled={page === totalPages}
-      onClick={() => setPage((p) => p + 1)}
-      className={`px-4 py-2 rounded-md border ${
-        page === totalPages
-          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-          : 'bg-white hover:bg-gray-50 text-gray-700'
-      }`}
-    >
-      Next
-    </button>
-  </div>
-</div>
-
+          <button
+            disabled={page === totalPages}
+            onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+            className={`px-4 py-2 rounded-md border ${
+              page === totalPages
+                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                : 'bg-white hover:bg-gray-50 text-gray-700'
+            }`}
+          >
+            Next
+          </button>
+        </div>
       </div>
-   
+    </div>
   );
-}
+};
+
+export default AssessmentList;
