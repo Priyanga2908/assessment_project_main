@@ -10,16 +10,16 @@ import { Evaluation, EvaluationRun } from '../../../../types';
 export default function AgentEvaluationListPage() {
   const router = useRouter();
 
-  const handleNavigateToCreate = () => {
-    router.push('/ai-studio/agent-evaluation/create');
-  };
+  // const handleNavigateToCreate = () => {
+  //   router.push('/ai-studio/agent-evaluation/create');
+  // };
 
-  const handleViewResult = (evaluation: Evaluation, run: EvaluationRun) => {
-    // Construct the URL using query parameters for the static 'View_Report' page
-    const url = `/agent-evaluation/View_Report?evaluationId=${evaluation.id}&runId=${run.runId}`;
-    console.log(`Navigating to report URL: ${url}`);
-    router.push(url);
-  };
+  // const handleViewResult = (evaluation: Evaluation, run: EvaluationRun) => {
+  //   // Construct the URL using query parameters for the static 'View_Report' page
+  //   const url = `/agent-evaluation/View_Report?evaluationId=${evaluation.id}&runId=${run.runId}`;
+  //   console.log(`Navigating to report URL: ${url}`);
+  //   router.push(url);
+  // };
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-primary/10 via-accent/10 to-background dark:from-primary/20 dark:via-accent/15 dark:to-background/90">

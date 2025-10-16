@@ -11,6 +11,7 @@ export default function CreateLensPage() {
   const [lens_name, setLensName] = useState('');
   const [lens_description, setDescription] = useState('');
   const [csv_file, setFile] = useState<File | null>(null);
+  const [category, setCategory] = useState('');
   const [isValidated, setIsValidated] = useState(false);
   const [validationMessage, setValidationMessage] = useState('');
   const [isProcessing, setIsProcessing] = useState(false);
@@ -103,8 +104,8 @@ export default function CreateLensPage() {
 
   // 🔹 Submit to Backend
   const handleSubmit = async () => {
-    if (!lens_name.trim() || !lens_description.trim()) {
-      alert('Please fill out both fields before submitting.');
+    if (!lens_name.trim() || !lens_description.trim() || !category.trim()) {
+      alert('Please fill out all fields before submitting.');
       return;
     }
 
@@ -119,11 +120,12 @@ export default function CreateLensPage() {
       const formData = new FormData();
       formData.append('lens_name', lens_name);
       formData.append('lens_description', lens_description);
+      formData.append('lens_category', category);
       formData.append('csv_file', csv_file);
 
       // 🔸 JWT Token for Auth
       const token =
-        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhlYzg2MmZjMjJhNzI4OTllOWFkZDlkIiwiZW1haWwiOiJ0ZXN0MUBnbWFpbC5jb20iLCJleHAiOjE3NjA0NTkyMzgsIm5iZiI6MTc2MDQ0MTIzOCwiaWF0IjoxNzYwNDQxMjM4fQ.YShAAbo-hH5kYtbsJCDD2Wdz6Ls4IZkyFD06Ae5SXLQ';
+        'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjoiNjhlZTMyOGUyODI2NWM2OGJmNDVmMTllIiwiZW1haWwiOiJybmFnZXNoNjYwQGdtYWlsLmNvbSIsImV4cCI6MTc2MDYyNzYyMiwibmJmIjoxNzYwNjA5NjIyLCJpYXQiOjE3NjA2MDk2MjJ9.Hn1f6KcYsFfZnD_gI6VNchQy1301XdC1QWC5NwyIQc8';
 
       const response = await fetch(API_URL, {
         method: 'POST',
@@ -148,6 +150,9 @@ export default function CreateLensPage() {
       setIsSubmitting(false);
     }
   };
+
+  // 🔹 Category options
+  const categories = ['Gen AI', 'Network Security', 'Cloud (AWS)', 'DevOps', 'IoT'];
 
   return (
     <div className="flex flex-col h-screen overflow-hidden bg-gradient-to-br from-primary/10 via-accent/10 to-background dark:from-primary/20 dark:via-accent/15 dark:to-background/90">
@@ -197,6 +202,26 @@ export default function CreateLensPage() {
                     className="w-full p-3 rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                     placeholder="Provide a brief description..."
                   />
+                </div>
+
+                {/* ✅ Category Dropdown */}
+                <div>
+                  <label htmlFor="category" className="block text-sm font-medium text-foreground mb-1">
+                    Category
+                  </label>
+                  <select
+                    id="category"
+                    value={category}
+                    onChange={(e) => setCategory(e.target.value)}
+                    className="w-full h-10 px-3 rounded-md border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-primary"
+                  >
+                    <option value="">Select category</option>
+                    {categories.map((cat) => (
+                      <option key={cat} value={cat}>
+                        {cat}
+                      </option>
+                    ))}
+                  </select>
                 </div>
 
                 {/* CSV Upload */}
@@ -249,6 +274,15 @@ export default function CreateLensPage() {
                       }`}
                     >
                       {isSubmitting ? 'Submitting...' : 'Create'}
+                    </button>
+
+                    {/* 🔹 Cancel Button */}
+                    <button
+                      type="button"
+                      onClick={() => router.push('/agent-evaluation')}
+                      className="h-10 px-4 rounded-md border border-border bg-background text-foreground text-sm font-medium hover:bg-muted/10 transition-all duration-200"
+                    >
+                      Cancel
                     </button>
                   </div>
                 </div>
